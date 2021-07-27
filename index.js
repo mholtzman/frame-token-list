@@ -24,7 +24,8 @@ const tokenBlacklist = [
   '0x5e3845a1d78db544613edbe43dc1ea497266d3b8',
   '0x47140a767a861f7a1f3b0dd22a2f463421c28814',
   '0x1c5b760f133220855340003b43cc9113ec494823',
-  '0x426ca1ea2406c07d75db9585f22781c096e3d0e0' // MNE
+  '0x426ca1ea2406c07d75db9585f22781c096e3d0e0', // MNE
+  '0x089a502032166e07ae83eb434c16790ca2fa4661' // CURE
 ]
 
 function version ({ major, minor, patch }) {
@@ -72,7 +73,7 @@ function listChanged (oldList, newList) {
   return !!differences
 }
 
-async function getExistingList (cid) {
+async function getExistingList () {
   try {
     const existingListCid = (await nebula.resolve(tokenDomain)).record.content
     const existingList = await nebula.ipfs.getJson(existingListCid)
@@ -84,6 +85,24 @@ async function getExistingList (cid) {
   }
 }
 
+async function loadTokens (chain) {
+  return (await chain.loadTokens()).map(token => {
+    if (tokenBlacklist.includes(token.address)) {
+      const badToken = { ...token }
+
+      return {
+        ...badToken,
+        extensions: {
+          ...badToken.extensions,
+          omit: true
+        }
+      }
+    }
+
+    return token
+  })
+}
+
 async function updateTokens () {
   const chainId = parseInt(await eth.request({ method: 'eth_chainId' }))
 
@@ -92,7 +111,8 @@ async function updateTokens () {
 
   console.log(`found existing list, ${existingVersion} with ${existingList.tokens.length} tokens`)
 
-  const chainTokens = (await chainMapping[chainId].loadTokens()).filter(t => !tokenBlacklist.includes(t.address))
+  const chainTokens = await loadTokens(chainMapping[chainId])
+
   const tokens = existingList.tokens.filter(token => token.chainId !== chainId).concat(chainTokens)
 
   if (listChanged(existingList.tokens, tokens)) {
@@ -107,6 +127,7 @@ async function updateTokens () {
       console.log(resp)
     } catch (e) {
       // this times out a lot due to a gateway max on the server of 30s
+      console.warn(e)
     }
 
     console.log(`updated token list at ${tokenDomain} to ${newVersion} with ${completeList.tokens.length} tokens`)

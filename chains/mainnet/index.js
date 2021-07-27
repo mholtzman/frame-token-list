@@ -4,7 +4,7 @@ const defaultTokens = require('./default-tokens.json')
 const tokenListUrl = 'https://tokens.coingecko.com/uniswap/all.json'
 
 async function fetchTokenList () {
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     function useDefault (e) {
       console.error(e)
       console.warn('could not load mainnet token list, using defaults')
