@@ -8,12 +8,10 @@ const tokenNode = process.env.NODE_ENV === 'production'
 : 'wss://rinkeby.infura.io/ws/v3/786ade30f36244469480aa5c2bf0743b'
 
 const ethProvider = require('eth-provider')
+const eth = ethProvider(['frame', tokenNode])
 
-const eth = ethProvider()
-const tokenProvider = ethProvider(tokenNode)
-
-const nebula = require('nebula')(
-  `https://${process.env.NEBULA_AUTH_TOKEN}@ipfs.nebula.land`, tokenProvider
+const nebula = require('nebula').default(
+  `https://${process.env.NEBULA_AUTH_TOKEN}@ipfs.nebula.land`, eth
 )
 
 const tokenDomain = process.env.TOKEN_DOMAIN || 'tokens.frame.eth'
@@ -25,7 +23,8 @@ const tokenBlacklist = [
   '0x47140a767a861f7a1f3b0dd22a2f463421c28814',
   '0x1c5b760f133220855340003b43cc9113ec494823',
   '0x426ca1ea2406c07d75db9585f22781c096e3d0e0', // MNE
-  '0x089a502032166e07ae83eb434c16790ca2fa4661' // CURE
+  '0x089a502032166e07ae83eb434c16790ca2fa4661', // CURE
+  '0x4922a015c4407f87432b179bb209e125432e4a2a' // XAUt
 ]
 
 function version ({ major, minor, patch }) {
@@ -123,8 +122,12 @@ async function updateTokens () {
     validate(completeList)
 
     try {
-      const resp = await nebula.update(tokenDomain, { content: JSON.stringify(completeList) })
-      console.log(resp)
+      const resp = await nebula.update(tokenDomain, {
+        version: newVersion.toString().substring(1),
+        content: completeList
+      })
+
+      console.log('got response from Nebula', resp)
     } catch (e) {
       // this times out a lot due to a gateway max on the server of 30s
       console.warn(e)
