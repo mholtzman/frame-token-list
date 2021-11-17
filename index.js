@@ -15,17 +15,7 @@ const nebula = require('nebula').default(
 )
 
 const tokenDomain = process.env.TOKEN_DOMAIN || 'tokens.frame.eth'
-
-const tokenBlacklist = [
-  '0x6f2afbf4f5e5e804c5b954889d7bf3768a3c9a45',
-  '0x0e69d0a2bbb30abcb7e5cfea0e4fde19c00a8d47', // IOV
-  '0x5e3845a1d78db544613edbe43dc1ea497266d3b8',
-  '0x47140a767a861f7a1f3b0dd22a2f463421c28814',
-  '0x1c5b760f133220855340003b43cc9113ec494823',
-  '0x426ca1ea2406c07d75db9585f22781c096e3d0e0', // MNE
-  '0x089a502032166e07ae83eb434c16790ca2fa4661', // CURE
-  '0x4922a015c4407f87432b179bb209e125432e4a2a' // XAUt
-]
+const tokenBlacklist = require('./token-blacklist')
 
 function version ({ major, minor, patch }) {
   return {
@@ -85,8 +75,15 @@ async function getExistingList () {
 }
 
 async function loadTokens (chain) {
-  return (await chain.loadTokens()).map(token => {
-    if (tokenBlacklist.includes(token.address)) {
+  let blacklistedTokens = [...tokenBlacklist]
+
+  const tokens = (await chain.loadTokens()).map(token => {
+    const blacklistIndex = blacklistedTokens
+      .findIndex(t => t.address.toLowerCase() === token.address.toLowerCase())
+
+    if (blacklistIndex >= 0) {
+      blacklistedTokens.splice(blacklistIndex, 1)
+
       const badToken = { ...token }
 
       return {
@@ -100,6 +97,9 @@ async function loadTokens (chain) {
 
     return token
   })
+
+  // add any explicitly black-listed tokens that aren't already in the list
+  return [...tokens, ...blacklistedTokens]
 }
 
 async function updateTokens () {
