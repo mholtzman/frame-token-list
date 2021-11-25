@@ -129,17 +129,16 @@ async function updateTokens () {
       const resp = await nebula.update(tokenDomain, {
         version: newVersion.toString().substring(1),
         content: {
-          source: completeList
+          source: JSON.stringify(completeList)
         }
       })
 
       console.log('got response from Nebula', resp)
+      console.log(`updated token list at ${tokenDomain} to ${newVersion} with ${completeList.tokens.length} tokens`)
     } catch (e) {
       // this times out a lot due to a gateway max on the server of 30s
       console.warn(e)
     }
-
-    console.log(`updated token list at ${tokenDomain} to ${newVersion} with ${completeList.tokens.length} tokens`)
   } else {
     console.log(`no changes, latest token list is ${existingVersion}`)
   }
