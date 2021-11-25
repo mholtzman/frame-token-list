@@ -1,3 +1,7 @@
+// ENV:
+//   NODE_ENV: production will use mainnet, anything else will use Rinkeby
+//  
+
 const validate = require('./validate')
 const chainMapping = require('./chains')
 
@@ -14,7 +18,7 @@ const nebula = require('nebula').default(
   `https://${process.env.NEBULA_AUTH_TOKEN}@ipfs.nebula.land`, eth
 )
 
-const tokenDomain = process.env.TOKEN_DOMAIN || 'tokens.frame.eth'
+const tokenDomain = process.env.TOKEN_DOMAIN || 'tokens.matt.eth'
 const tokenBlacklist = require('./token-blacklist')
 
 function version ({ major, minor, patch }) {
@@ -124,7 +128,9 @@ async function updateTokens () {
     try {
       const resp = await nebula.update(tokenDomain, {
         version: newVersion.toString().substring(1),
-        content: completeList
+        content: {
+          source: completeList
+        }
       })
 
       console.log('got response from Nebula', resp)
