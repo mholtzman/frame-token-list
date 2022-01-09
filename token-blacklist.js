@@ -88,5 +88,15 @@ module.exports = [
     extensions: {
       omit: true
     }
+  },
+  {
+    chainId: 4,
+    name: 'JoeBar',
+    symbol: 'xJOE',
+    address: '0x57319d41f71e81f3c65f2a47ca4e001ebafd4f33',
+    decimals: 18,
+    extensions: {
+      omit: true
+    }
   }
 ]
